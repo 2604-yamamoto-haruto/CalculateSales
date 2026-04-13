@@ -37,9 +37,9 @@ public class CalculateSales {
 		}
 
 		// ※ここから集計処理を作成してください。(処理内容2-1、2-2)
-
-
-
+		if(!scanFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
+			return;
+		}	
 		// 支店別集計ファイル書き込み処理
 		if(!writeFile(args[0], FILE_NAME_BRANCH_OUT, branchNames, branchSales)) {
 			return;
@@ -68,6 +68,8 @@ public class CalculateSales {
 			// 一行ずつ読み込む
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
+				String[] names = line.split(",");
+				branchNames.put(names[0],(names[1]));
 				System.out.println(line);
 			}
 
@@ -88,7 +90,11 @@ public class CalculateSales {
 		}
 		return true;
 	}
-
+	
+	private static boolean scanFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
+		return true;
+	}
+	
 	/**
 	 * 支店別集計ファイル書き込み処理
 	 *
