@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CalculateSales {
@@ -32,19 +34,44 @@ public class CalculateSales {
 		Map<String, Long> branchSales = new HashMap<>();
 
 		// 支店定義ファイル読み込み処理
-		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
+		 if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
 			return;
 		}
 
 		// ※ここから集計処理を作成してください。(処理内容2-1、2-2)
-		if(!scanFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
+		 File[] files = new File(args[0]).listFiles();
+		List<File> rcdFiles = new ArrayList<>();
+		BufferedReader br = null;
+		List<String> code = new ArrayList<>();
+		List<String> sales = new ArrayList<>();
+		try {
+			for(int i = 0; i < files.length ; i++) {
+				if(files[i].getName().matches("^[0-9]{8}"+".+rcd")) {
+					rcdFiles.add(files[i]);
+				}
+				File file = new File(args[0]);
+				FileReader fr = new FileReader(file);
+				br = new BufferedReader(fr);
+				String line;
+				for(int j = 0; j < rcdFiles.size(); j++) {
+					if((line = br.readLine()) != null) {
+						code.add(line);
+						sales.add(line = br.readLine());
+					}
+					long fileSale = Long.parseLong(line);
+					branchSales.put(code.get(i),fileSale);
+					System.out.println(branchSales.get(sales.get(i)));
+				}
+			}
+
+		}catch(IOException e) {
+			System.out.println(UNKNOWN_ERROR);
 			return;
-		}	
+		}
 		// 支店別集計ファイル書き込み処理
 		if(!writeFile(args[0], FILE_NAME_BRANCH_OUT, branchNames, branchSales)) {
 			return;
 		}
-
 	}
 
 	/**
@@ -76,7 +103,10 @@ public class CalculateSales {
 		} catch(IOException e) {
 			System.out.println(UNKNOWN_ERROR);
 			return false;
-		} finally {
+		}catch(Exception e) {
+			System.out.println(UNKNOWN_ERROR);
+			return false;
+		}finally {
 			// ファイルを開いている場合
 			if(br != null) {
 				try {
@@ -90,11 +120,7 @@ public class CalculateSales {
 		}
 		return true;
 	}
-	
-	private static boolean scanFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
-		return true;
-	}
-	
+
 	/**
 	 * 支店別集計ファイル書き込み処理
 	 *
