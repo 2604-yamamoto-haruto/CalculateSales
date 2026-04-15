@@ -1,13 +1,15 @@
 package jp.alhinc.calculate_sales;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Map;;
 
 public class CalculateSales {
 
@@ -34,44 +36,57 @@ public class CalculateSales {
 		Map<String, Long> branchSales = new HashMap<>();
 
 		// 支店定義ファイル読み込み処理
-		 if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
+		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
 			return;
 		}
 
 		// ※ここから集計処理を作成してください。(処理内容2-1、2-2)
-		 File[] files = new File(args[0]).listFiles();
-		List<File> rcdFiles = new ArrayList<>();
 		BufferedReader br = null;
+		List<File> rcdFiles = new ArrayList<>();
 		List<String> code = new ArrayList<>();
 		List<String> sales = new ArrayList<>();
-		try {
-			for(int i = 0; i < files.length ; i++) {
-				if(files[i].getName().matches("^[0-9]{8}"+".+rcd")) {
-					rcdFiles.add(files[i]);
-				}
-				File file = new File(args[0]);
-				FileReader fr = new FileReader(file);
-				br = new BufferedReader(fr);
-				String line;
-				for(int j = 0; j < rcdFiles.size(); j++) {
-					if((line = br.readLine()) != null) {
-						code.add(line);
-						sales.add(line = br.readLine());
-					}
-					long fileSale = Long.parseLong(line);
-					branchSales.put(code.get(i),fileSale);
-					System.out.println(branchSales.get(sales.get(i)));
-				}
-			}
+		File[] files = new File(args[0]).listFiles();
+		int count = 0;
+		Long saleAmount;
 
-		}catch(IOException e) {
-			System.out.println(UNKNOWN_ERROR);
-			return;
+		for(int i = 0; i < files.length ; i++) {
+			if(files[i].getName().matches("[0-9]{8}"+".rcd$")){
+				rcdFiles.add(files[i]);
+			}
 		}
+		for(int j = 0; j < rcdFiles.size();j++) {
+			try {
+				FileReader fr = new FileReader(rcdFiles.get(j));
+				br = new BufferedReader(fr);
+
+			String line;
+			count = 0;
+			while((line = br.readLine()) != null&& count < 2){
+				code.add(line);
+				sales.add(line = br.readLine());
+				count++;
+			}
+			if(count >= 2) {
+				System.out.println("ファイルのフォーマットが不正です。");
+				break;
+			}
+				long fileSale = Long.parseLong(sales.get(j));
+				branchSales.put(code.get(j),fileSale);
+				saleAmount = branchSales.get(code.get(j))+fileSale;
+				if(saleAmount > 1000000000) {
+					System.out.println("合計金額が10桁を超えました");
+					break;
+				}
+			}catch(IOException e){
+				System.out.println(FILE_NOT_EXIST);
+			}
+		}
+
 		// 支店別集計ファイル書き込み処理
 		if(!writeFile(args[0], FILE_NAME_BRANCH_OUT, branchNames, branchSales)) {
 			return;
 		}
+
 	}
 
 	/**
@@ -95,18 +110,19 @@ public class CalculateSales {
 			// 一行ずつ読み込む
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
-				String[] names = line.split(",");
-				branchNames.put(names[0],(names[1]));
-				System.out.println(line);
+				if(line.matches("^[0-9]{3}"+",+.*$")) {
+					String[] names = line.split(",");
+					branchNames.put(names[0],(names[1]));
+					System.out.println(line);
+				}else {
+					System.out.println(FILE_INVALID_FORMAT);
+					return false;
+				}
 			}
-
 		} catch(IOException e) {
-			System.out.println(UNKNOWN_ERROR);
+			System.out.println(FILE_NOT_EXIST);
 			return false;
-		}catch(Exception e) {
-			System.out.println(UNKNOWN_ERROR);
-			return false;
-		}finally {
+		} finally {
 			// ファイルを開いている場合
 			if(br != null) {
 				try {
@@ -121,7 +137,7 @@ public class CalculateSales {
 		return true;
 	}
 
-	/**
+		/**
 	 * 支店別集計ファイル書き込み処理
 	 *
 	 * @param フォルダパス
@@ -132,7 +148,15 @@ public class CalculateSales {
 	 */
 	private static boolean writeFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
 		// ※ここに書き込み処理を作成してください。(処理内容3-1)
-
+		for (String key : branchNames.keySet()) {
+			try (BufferedWriter bw = new BufferedWriter(new FileWriter("branch.out",true))){
+				bw.write(key + "," + branchNames.get(key) + "," + branchSales.get(key));
+				bw.newLine();
+			}catch(IOException e) {
+				System.out.println(UNKNOWN_ERROR);
+				return false;
+			}
+		}
 		return true;
 	}
 
