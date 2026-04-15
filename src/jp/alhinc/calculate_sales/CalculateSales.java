@@ -46,7 +46,6 @@ public class CalculateSales {
 		List<String> code = new ArrayList<>();
 		List<String> sales = new ArrayList<>();
 		File[] files = new File(args[0]).listFiles();
-		int count = 0;
 		Long saleAmount;
 
 		for(int i = 0; i < files.length ; i++) {
@@ -60,23 +59,13 @@ public class CalculateSales {
 				br = new BufferedReader(fr);
 
 			String line;
-			count = 0;
-			while((line = br.readLine()) != null&& count < 2){
+			while((line = br.readLine()) != null){
 				code.add(line);
 				sales.add(line = br.readLine());
-				count++;
-			}
-			if(count >= 2) {
-				System.out.println("ファイルのフォーマットが不正です。");
-				break;
 			}
 				long fileSale = Long.parseLong(sales.get(j));
 				branchSales.put(code.get(j),fileSale);
 				saleAmount = branchSales.get(code.get(j))+fileSale;
-				if(saleAmount > 1000000000) {
-					System.out.println("合計金額が10桁を超えました");
-					break;
-				}
 			}catch(IOException e){
 				System.out.println(FILE_NOT_EXIST);
 			}
@@ -110,14 +99,9 @@ public class CalculateSales {
 			// 一行ずつ読み込む
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
-				if(line.matches("^[0-9]{3}"+",+.*$")) {
 					String[] names = line.split(",");
 					branchNames.put(names[0],(names[1]));
 					System.out.println(line);
-				}else {
-					System.out.println(FILE_INVALID_FORMAT);
-					return false;
-				}
 			}
 		} catch(IOException e) {
 			System.out.println(FILE_NOT_EXIST);
