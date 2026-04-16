@@ -43,8 +43,7 @@ public class CalculateSales {
 		// ※ここから集計処理を作成してください。(処理内容2-1、2-2)
 		BufferedReader br = null;
 		List<File> rcdFiles = new ArrayList<>();
-		List<String> code = new ArrayList<>();
-		List<String> sales = new ArrayList<>();
+		List<String> codesales = new ArrayList<>();
 		File[] files = new File(args[0]).listFiles();
 		Long saleAmount;
 
@@ -60,15 +59,14 @@ public class CalculateSales {
 
 				String line;
 				while((line = br.readLine()) != null){
-				code.add(line);
-				sales.add(line = br.readLine());
-			}
-				long fileSale = Long.parseLong(sales.get(i));
-				saleAmount = branchSales.get(code.get(i)) + fileSale;
-				branchSales.put(code.get(i), saleAmount);
+					codesales.add(line);
+				}
+				long fileSale = Long.parseLong(codesales.get(i * 2 + 1));
+				saleAmount = branchSales.get(codesales.get(i * 2)) + fileSale;
+				branchSales.put(codesales.get(i * 2), saleAmount);
 			}catch(IOException e) {
 				System.out.println(FILE_NOT_EXIST);
-				break;
+				return;
 			} finally {
 				// ファイルを開いている場合
 				if(br != null) {
@@ -77,7 +75,7 @@ public class CalculateSales {
 						br.close();
 					} catch(IOException e) {
 						System.out.println(UNKNOWN_ERROR);
-						break;
+						return;
 					}
 				}
 			}
@@ -112,9 +110,9 @@ public class CalculateSales {
 			// 一行ずつ読み込む
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
-					String[] names = line.split(",");
-					branchNames.put(names[0], names[1]);
-					branchSales.put(names[0], num);
+				String[] items = line.split(",");
+				branchNames.put(items[0], items[1]);
+				branchSales.put(items[0], num);
 			}
 		} catch(IOException e) {
 			System.out.println(FILE_NOT_EXIST);
