@@ -48,26 +48,38 @@ public class CalculateSales {
 		File[] files = new File(args[0]).listFiles();
 		Long saleAmount;
 
-		for(int i = 0; i < files.length ; i++) {
-			if(files[i].getName().matches("[0-9]{8}"+".rcd$")){
+		for(int i = 0; i < files.length; i++) {
+			if(files[i].getName().matches("[0-9]{8}[.]rcd$")){
 				rcdFiles.add(files[i]);
 			}
 		}
-		for(int j = 0; j < rcdFiles.size();j++) {
+		for(int i = 0; i < rcdFiles.size(); i++) {
 			try {
-				FileReader fr = new FileReader(rcdFiles.get(j));
+				FileReader fr = new FileReader(rcdFiles.get(i));
 				br = new BufferedReader(fr);
 
-			String line;
-			while((line = br.readLine()) != null){
+				String line;
+				while((line = br.readLine()) != null){
 				code.add(line);
 				sales.add(line = br.readLine());
 			}
-				long fileSale = Long.parseLong(sales.get(j));
-				branchSales.put(code.get(j),fileSale);
-				saleAmount = branchSales.get(code.get(j))+fileSale;
-			}catch(IOException e){
+				long fileSale = Long.parseLong(sales.get(i));
+				saleAmount = branchSales.get(code.get(i)) + fileSale;
+				branchSales.put(code.get(i), saleAmount);
+			}catch(IOException e) {
 				System.out.println(FILE_NOT_EXIST);
+				break;
+			} finally {
+				// ファイルを開いている場合
+				if(br != null) {
+					try {
+						// ファイルを閉じる
+						br.close();
+					} catch(IOException e) {
+						System.out.println(UNKNOWN_ERROR);
+						break;
+					}
+				}
 			}
 		}
 
@@ -89,6 +101,7 @@ public class CalculateSales {
 	 */
 	private static boolean readFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
 		BufferedReader br = null;
+		Long num = 0L;
 
 		try {
 			File file = new File(path, fileName);
@@ -100,8 +113,8 @@ public class CalculateSales {
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
 					String[] names = line.split(",");
-					branchNames.put(names[0],(names[1]));
-					System.out.println(line);
+					branchNames.put(names[0], names[1]);
+					branchSales.put(names[0], num);
 			}
 		} catch(IOException e) {
 			System.out.println(FILE_NOT_EXIST);
@@ -133,7 +146,7 @@ public class CalculateSales {
 	private static boolean writeFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
 		// ※ここに書き込み処理を作成してください。(処理内容3-1)
 		for (String key : branchNames.keySet()) {
-			try (BufferedWriter bw = new BufferedWriter(new FileWriter("branch.out",true))){
+			try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName, true))){
 				bw.write(key + "," + branchNames.get(key) + "," + branchSales.get(key));
 				bw.newLine();
 			}catch(IOException e) {
