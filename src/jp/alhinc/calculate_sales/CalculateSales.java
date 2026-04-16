@@ -43,7 +43,6 @@ public class CalculateSales {
 		// ※ここから集計処理を作成してください。(処理内容2-1、2-2)
 		BufferedReader br = null;
 		List<File> rcdFiles = new ArrayList<>();
-		List<String> codesales = new ArrayList<>();
 		File[] files = new File(args[0]).listFiles();
 		Long saleAmount;
 
@@ -53,17 +52,18 @@ public class CalculateSales {
 			}
 		}
 		for(int i = 0; i < rcdFiles.size(); i++) {
+			List<String> codeSales = new ArrayList<>();
 			try {
 				FileReader fr = new FileReader(rcdFiles.get(i));
 				br = new BufferedReader(fr);
 
 				String line;
 				while((line = br.readLine()) != null){
-					codesales.add(line);
+					codeSales.add(line);
 				}
-				long fileSale = Long.parseLong(codesales.get(i * 2 + 1));
-				saleAmount = branchSales.get(codesales.get(i * 2)) + fileSale;
-				branchSales.put(codesales.get(i * 2), saleAmount);
+				long fileSale = Long.parseLong(codeSales.get(1));
+				saleAmount = branchSales.get(codeSales.get(0)) + fileSale;
+				branchSales.put(codeSales.get(0), saleAmount);
 			}catch(IOException e) {
 				System.out.println(FILE_NOT_EXIST);
 				return;
