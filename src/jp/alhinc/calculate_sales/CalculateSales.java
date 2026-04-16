@@ -23,6 +23,10 @@ public class CalculateSales {
 	private static final String UNKNOWN_ERROR = "予期せぬエラーが発生しました";
 	private static final String FILE_NOT_EXIST = "支店定義ファイルが存在しません";
 	private static final String FILE_INVALID_FORMAT = "支店定義ファイルのフォーマットが不正です";
+	private static final String FILE_NOT_CONESCUTIVE_NUMBERS = "売上ファイル名が連番になっていません";
+	private static final String TOTAL_AMOUNT_EXCEEDED = "売上金額が10桁を超えました";
+	private static final String INVALID_STORE_CODE = "の支店コードが不正です";
+	private static final String INVALID_FORMAT = "のフォーマットが不正です";
 
 	/**
 	 * メインメソッド
@@ -51,6 +55,14 @@ public class CalculateSales {
 				rcdFiles.add(files[i]);
 			}
 		}
+		for(int i = 0; i < rcdFiles.size() -1; i++) {
+			int former = Integer.parseInt(rcdFiles.get(i).substring(0, 8));
+			int latter = Integer.parseInt(rcdFiles.get(i + 1).substring(0, 8));
+			if((latter - former) != 1) {
+				System.out.println(FILE_NOT_CONESCUTIVE_NUMBERS);
+				return;
+			}
+		}
 		for(int i = 0; i < rcdFiles.size(); i++) {
 			List<String> codeSales = new ArrayList<>();
 			try {
@@ -61,8 +73,20 @@ public class CalculateSales {
 				while((line = br.readLine()) != null){
 					codeSales.add(line);
 				}
+				if(codeSales.size() != 2) {
+				    System.out.println(codeSales.get(0) + INVALID_FORMAT);
+				}
+				if (!branchNames.containsKey(codeSales.get(0))) {
+				    System.out.println(codeSales.get(0) + INVALID_STORE_CODE);
+					return;
+				}
 				long fileSale = Long.parseLong(codeSales.get(1));
 				saleAmount = branchSales.get(codeSales.get(0)) + fileSale;
+				if(saleAmount >= 10000000000L){
+					System.out.println(TOTAL_AMOUNT_EXCEEDED);
+					return;
+				}
+
 				branchSales.put(codeSales.get(0), saleAmount);
 			}catch(IOException e) {
 				System.out.println(FILE_NOT_EXIST);
@@ -103,6 +127,10 @@ public class CalculateSales {
 
 		try {
 			File file = new File(path, fileName);
+			if(!file.exists()) {
+			    System.out.println(FILE_NOT_EXIST);
+			    return false;
+			}
 			FileReader fr = new FileReader(file);
 			br = new BufferedReader(fr);
 
@@ -111,6 +139,10 @@ public class CalculateSales {
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
 				String[] items = line.split(",");
+				if((items.length != 2) || (!items[0].matches("[0-9]{3}"))){
+				    System.out.println(FILE_INVALID_FORMAT);
+				    return false;
+				}
 				branchNames.put(items[0], items[1]);
 				branchSales.put(items[0], num);
 			}
