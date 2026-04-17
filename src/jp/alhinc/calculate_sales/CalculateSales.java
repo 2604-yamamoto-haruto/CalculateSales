@@ -38,6 +38,10 @@ public class CalculateSales {
 		Map<String, String> branchNames = new HashMap<>();
 		// 支店コードと売上金額を保持するMap
 		Map<String, Long> branchSales = new HashMap<>();
+		if (args.length != 1) {
+		   System.out.println(UNKNOWN_ERROR);
+		   return;
+		}
 
 		// 支店定義ファイル読み込み処理
 		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
@@ -56,8 +60,8 @@ public class CalculateSales {
 			}
 		}
 		for(int i = 0; i < rcdFiles.size() -1; i++) {
-			int former = Integer.parseInt(rcdFiles.get(i).substring(0, 8));
-			int latter = Integer.parseInt(rcdFiles.get(i + 1).substring(0, 8));
+			int former = Integer.parseInt(rcdFiles.get(i).getName().substring(0, 8));
+			int latter = Integer.parseInt(rcdFiles.get(i + 1).getName().substring(0, 8));
 			if((latter - former) != 1) {
 				System.out.println(FILE_NOT_CONESCUTIVE_NUMBERS);
 				return;
@@ -79,6 +83,10 @@ public class CalculateSales {
 				if (!branchNames.containsKey(codeSales.get(0))) {
 				    System.out.println(codeSales.get(0) + INVALID_STORE_CODE);
 					return;
+				}
+				if(!codeSales.get(1).matches("^[0-9]*$")) {
+				    System.out.println();
+				    return;
 				}
 				long fileSale = Long.parseLong(codeSales.get(1));
 				saleAmount = branchSales.get(codeSales.get(0)) + fileSale;
