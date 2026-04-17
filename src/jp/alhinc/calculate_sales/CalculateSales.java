@@ -79,13 +79,14 @@ public class CalculateSales {
 				}
 				if(codeSales.size() != 2) {
 				    System.out.println(codeSales.get(0) + INVALID_FORMAT);
+				    return;
 				}
 				if (!branchNames.containsKey(codeSales.get(0))) {
 				    System.out.println(codeSales.get(0) + INVALID_STORE_CODE);
 					return;
 				}
 				if(!codeSales.get(1).matches("^[0-9]*$")) {
-				    System.out.println();
+				    System.out.println(UNKNOWN_ERROR);
 				    return;
 				}
 				long fileSale = Long.parseLong(codeSales.get(1));
@@ -97,7 +98,7 @@ public class CalculateSales {
 
 				branchSales.put(codeSales.get(0), saleAmount);
 			}catch(IOException e) {
-				System.out.println(FILE_NOT_EXIST);
+				System.out.println(UNKNOWN_ERROR);
 				return;
 			} finally {
 				// ファイルを開いている場合
