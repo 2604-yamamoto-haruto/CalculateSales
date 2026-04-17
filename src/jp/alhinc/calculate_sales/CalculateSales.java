@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;;
@@ -55,10 +56,11 @@ public class CalculateSales {
 		Long saleAmount;
 
 		for(int i = 0; i < files.length; i++) {
-			if(files[i].getName().matches("[0-9]{8}[.]rcd$")){
+			if(files[i].isFile() && files[i].getName().matches("^[0-9]{8}[.]rcd$")){
 				rcdFiles.add(files[i]);
 			}
 		}
+		Collections.sort(rcdFiles);
 		for(int i = 0; i < rcdFiles.size() -1; i++) {
 			int former = Integer.parseInt(rcdFiles.get(i).getName().substring(0, 8));
 			int latter = Integer.parseInt(rcdFiles.get(i + 1).getName().substring(0, 8));
@@ -148,7 +150,7 @@ public class CalculateSales {
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
 				String[] items = line.split(",");
-				if((items.length != 2) || (!items[0].matches("[0-9]{3}"))){
+				if((items.length != 2) || (!items[0].matches("^[0-9]{3}$"))){
 				    System.out.println(FILE_INVALID_FORMAT);
 				    return false;
 				}
