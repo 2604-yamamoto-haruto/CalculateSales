@@ -156,7 +156,7 @@ public class CalculateSales {
 				branchSales.put(items[0], num);
 			}
 		} catch(IOException e) {
-			System.out.println(FILE_NOT_EXIST);
+			System.out.println(UNKNOWN_ERROR);
 			return false;
 		} finally {
 			// ファイルを開いている場合
