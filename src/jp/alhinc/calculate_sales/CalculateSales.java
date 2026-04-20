@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;;
+import java.util.Map;
 
 public class CalculateSales {
 
@@ -28,15 +28,11 @@ public class CalculateSales {
 
 	// エラーメッセージ
 	private static final String UNKNOWN_ERROR = "予期せぬエラーが発生しました";
-	private static final String FILE_NOT_EXIST = "支店定義ファイルが存在しません";
-	private static final String FILE_INVALID_FORMAT = "支店定義ファイルのフォーマットが不正です";
+	private static final String FILE_NOT_EXIST = "定義ファイルが存在しません";
+	private static final String FILE_INVALID_FORMAT = "ファイルのフォーマットが不正です";
 	private static final String FILE_NOT_CONESCUTIVE_NUMBERS = "売上ファイル名が連番になっていません";
 	private static final String TOTAL_AMOUNT_EXCEEDED = "売上金額が10桁を超えました";
-	private static final String INVALID_STORE_CODE = "の支店コードが不正です";
-	private static final String INVALID_PRODUCT_CODE = "の商品コードが不正です";
-	private static final String INVALID_FORMAT = "のフォーマットが不正です";
-	private static final String PRODUCT_FILE_NOT_EXIST = "商品定義ファイルが存在しません";
-	private static final String PRODUCT_FILE_INVALID_FORMAT = "商品定義ファイルのフォーマットが不正です";
+	private static final String INVALID_STORE_CODE = "コードが不正です";
 
 	/**
 	 * メインメソッド
@@ -53,20 +49,24 @@ public class CalculateSales {
 		// 商品コードと売上金額を保持するMap
 		Map<String, Long> commoditySales = new HashMap<>();
 		// 支店別集計用正規表現
-		String branch = "^[0-9]{3}$";
+		String branchRegex = "^[0-9]{3}$";
 		// 商品別集計用正規表現
-		String merchandise = "^[A-Za-z0-9]{8}$";
+		String commodityRegex = "^[A-Za-z0-9]{8}$";
+		// 支店
+		String branch = "支店";
+		// 商品
+		String commodity = "商品";
 		if (args.length != 1) {
 		   System.out.println(UNKNOWN_ERROR);
 		   return;
 		}
 
 		// 支店定義ファイル読み込み処理
-		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales, branch)) {
+		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales, branchRegex, branch)) {
 			return;
 		}
 		// 商品定義ファイル読み込み処理
-		if(!readFile(args[0], FILE_NAME_COMMODITY_LST, commodityNames, commoditySales, merchandise)) {
+		if(!readFile(args[0], FILE_NAME_COMMODITY_LST, commodityNames, commoditySales, commodityRegex, commodity)) {
 			return;
 		}
 
@@ -75,7 +75,7 @@ public class CalculateSales {
 		List<File> rcdFiles = new ArrayList<>();
 		File[] files = new File(args[0]).listFiles();
 		Long saleAmount;
-		Long productAmount;
+		Long commodityAmount;
 
 		for(int i = 0; i < files.length; i++) {
 			if(files[i].isFile() && files[i].getName().matches("^[0-9]{8}[.]rcd$")){
@@ -102,15 +102,15 @@ public class CalculateSales {
 					codeSales.add(line);
 				}
 				if(codeSales.size() != 3) {
-				    System.out.println(rcdFiles.get(0) + INVALID_FORMAT);
+				    System.out.println(rcdFiles.get(0) + FILE_INVALID_FORMAT);
 				    return;
 				}
 				if (!branchNames.containsKey(codeSales.get(0))) {
-				    System.out.println(rcdFiles.get(0) + INVALID_STORE_CODE);
+				    System.out.println(rcdFiles.get(0) + branch + INVALID_STORE_CODE);
 					return;
 				}
 				if (!commodityNames.containsKey(codeSales.get(1))) {
-				    System.out.println(rcdFiles.get(0) + INVALID_PRODUCT_CODE);
+				    System.out.println(rcdFiles.get(0) + commodity + INVALID_STORE_CODE);
 					return;
 				}
 				if(!codeSales.get(2).matches("^[0-9]*$")) {
@@ -119,19 +119,17 @@ public class CalculateSales {
 				}
 				long fileSale = Long.parseLong(codeSales.get(2));
 				saleAmount = branchSales.get(codeSales.get(0)) + fileSale;
-				if(saleAmount >= 10000000000L){
-					System.out.println(TOTAL_AMOUNT_EXCEEDED);
-					return;
-				}
+
 				long productSales = Long.parseLong(codeSales.get(2));
-				productAmount = commoditySales.get(codeSales.get(1)) + productSales;
-				if(productAmount >= 10000000000L){
+				commodityAmount = commoditySales.get(codeSales.get(1)) + productSales;
+
+				if(saleAmount >= 10000000000L || commodityAmount >= 10000000000L){
 					System.out.println(TOTAL_AMOUNT_EXCEEDED);
 					return;
 				}
 
 				branchSales.put(codeSales.get(0), saleAmount);
-				commoditySales.put(codeSales.get(1), productAmount);
+				commoditySales.put(codeSales.get(1), commodityAmount);
 			}catch(IOException e) {
 				System.out.println(UNKNOWN_ERROR);
 				return;
@@ -169,17 +167,15 @@ public class CalculateSales {
 	 * @param 支店コードと売上金額を保持するMap
 	 * @return 読み込み可否
 	 */
-	private static boolean readFile(String path, String fileName, Map<String, String> names, Map<String, Long> sales, String regular) {
+	private static boolean readFile(String path, String fileName, Map<String, String> names, Map<String, Long> sales, String regex, String item) {
 		BufferedReader br = null;
 		Long num = 0L;
 
 		try {
 			File file = new File(path, fileName);
 			if(!file.exists()) {
-				if("branch.lst" == regular) {
-					System.out.println(FILE_NOT_EXIST);
-				}else {
-					System.out.println(PRODUCT_FILE_NOT_EXIST);
+				if("branch.lst" == regex) {
+					System.out.println(item + FILE_NOT_EXIST);
 				}
 			    return false;
 			}
@@ -191,11 +187,9 @@ public class CalculateSales {
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
 				String[] items = line.split(",");
-				if((items.length != 2) || (!items[0].matches(regular))){
-					if("branch.lst" == regular) {
-						System.out.println(FILE_INVALID_FORMAT);
-					}else {
-						System.out.println(PRODUCT_FILE_INVALID_FORMAT);
+				if((items.length != 2) || (!items[0].matches(regex))){
+					if("branch.lst" == regex) {
+						System.out.println(item + FILE_INVALID_FORMAT);
 					}
 				    return false;
 				}
