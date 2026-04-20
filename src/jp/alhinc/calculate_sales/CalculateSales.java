@@ -174,9 +174,7 @@ public class CalculateSales {
 		try {
 			File file = new File(path, fileName);
 			if(!file.exists()) {
-				if("branch.lst" == regex) {
-					System.out.println(item + FILE_NOT_EXIST);
-				}
+				System.out.println(item + FILE_NOT_EXIST);
 			    return false;
 			}
 			FileReader fr = new FileReader(file);
@@ -188,9 +186,7 @@ public class CalculateSales {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
 				String[] items = line.split(",");
 				if((items.length != 2) || (!items[0].matches(regex))){
-					if("branch.lst" == regex) {
-						System.out.println(item + FILE_INVALID_FORMAT);
-					}
+					System.out.println(item + FILE_INVALID_FORMAT);
 				    return false;
 				}
 				names.put(items[0], items[1]);
