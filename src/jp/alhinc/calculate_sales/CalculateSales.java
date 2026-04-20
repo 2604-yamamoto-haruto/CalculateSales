@@ -20,6 +20,12 @@ public class CalculateSales {
 	// 支店別集計ファイル名
 	private static final String FILE_NAME_BRANCH_OUT = "branch.out";
 
+	// 商品定義ファイル名
+	private static final String FILE_NAME_COMMODITY_LST = "commodity.lst";
+
+	// 商品別集計ファイル名
+	private static final String FILE_NAME_COMMODITY_OUT = "commodity.out";
+
 	// エラーメッセージ
 	private static final String UNKNOWN_ERROR = "予期せぬエラーが発生しました";
 	private static final String FILE_NOT_EXIST = "支店定義ファイルが存在しません";
@@ -27,7 +33,10 @@ public class CalculateSales {
 	private static final String FILE_NOT_CONESCUTIVE_NUMBERS = "売上ファイル名が連番になっていません";
 	private static final String TOTAL_AMOUNT_EXCEEDED = "売上金額が10桁を超えました";
 	private static final String INVALID_STORE_CODE = "の支店コードが不正です";
+	private static final String INVALID_PRODUCT_CODE = "の商品コードが不正です";
 	private static final String INVALID_FORMAT = "のフォーマットが不正です";
+	private static final String PRODUCT_FILE_NOT_EXIST = "商品定義ファイルが存在しません";
+	private static final String PRODUCT_FILE_INVALID_FORMAT = "商品定義ファイルのフォーマットが不正です";
 
 	/**
 	 * メインメソッド
@@ -39,13 +48,25 @@ public class CalculateSales {
 		Map<String, String> branchNames = new HashMap<>();
 		// 支店コードと売上金額を保持するMap
 		Map<String, Long> branchSales = new HashMap<>();
+		// 商品コードと商品名を保持するMap
+		Map<String, String> commodityNames = new HashMap<>();
+		// 商品コードと売上金額を保持するMap
+		Map<String, Long> commoditySales = new HashMap<>();
+		// 支店別集計用正規表現
+		String branch = "^[0-9]{3}$";
+		// 商品別集計用正規表現
+		String merchandise = "^[A-Za-z0-9]{8}$";
 		if (args.length != 1) {
 		   System.out.println(UNKNOWN_ERROR);
 		   return;
 		}
 
 		// 支店定義ファイル読み込み処理
-		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
+		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales, branch)) {
+			return;
+		}
+		// 商品定義ファイル読み込み処理
+		if(!readFile(args[0], FILE_NAME_COMMODITY_LST, commodityNames, commoditySales, merchandise)) {
 			return;
 		}
 
@@ -54,6 +75,7 @@ public class CalculateSales {
 		List<File> rcdFiles = new ArrayList<>();
 		File[] files = new File(args[0]).listFiles();
 		Long saleAmount;
+		Long productAmount;
 
 		for(int i = 0; i < files.length; i++) {
 			if(files[i].isFile() && files[i].getName().matches("^[0-9]{8}[.]rcd$")){
@@ -79,26 +101,37 @@ public class CalculateSales {
 				while((line = br.readLine()) != null){
 					codeSales.add(line);
 				}
-				if(codeSales.size() != 2) {
-				    System.out.println(codeSales.get(0) + INVALID_FORMAT);
+				if(codeSales.size() != 3) {
+				    System.out.println(rcdFiles.get(0) + INVALID_FORMAT);
 				    return;
 				}
 				if (!branchNames.containsKey(codeSales.get(0))) {
-				    System.out.println(codeSales.get(0) + INVALID_STORE_CODE);
+				    System.out.println(rcdFiles.get(0) + INVALID_STORE_CODE);
 					return;
 				}
-				if(!codeSales.get(1).matches("^[0-9]*$")) {
+				if (!commodityNames.containsKey(codeSales.get(1))) {
+				    System.out.println(rcdFiles.get(0) + INVALID_PRODUCT_CODE);
+					return;
+				}
+				if(!codeSales.get(2).matches("^[0-9]*$")) {
 				    System.out.println(UNKNOWN_ERROR);
 				    return;
 				}
-				long fileSale = Long.parseLong(codeSales.get(1));
+				long fileSale = Long.parseLong(codeSales.get(2));
 				saleAmount = branchSales.get(codeSales.get(0)) + fileSale;
 				if(saleAmount >= 10000000000L){
 					System.out.println(TOTAL_AMOUNT_EXCEEDED);
 					return;
 				}
+				long productSales = Long.parseLong(codeSales.get(2));
+				productAmount = commoditySales.get(codeSales.get(1)) + productSales;
+				if(productAmount >= 10000000000L){
+					System.out.println(TOTAL_AMOUNT_EXCEEDED);
+					return;
+				}
 
 				branchSales.put(codeSales.get(0), saleAmount);
+				commoditySales.put(codeSales.get(1), productAmount);
 			}catch(IOException e) {
 				System.out.println(UNKNOWN_ERROR);
 				return;
@@ -120,6 +153,10 @@ public class CalculateSales {
 		if(!writeFile(args[0], FILE_NAME_BRANCH_OUT, branchNames, branchSales)) {
 			return;
 		}
+		// 商品別集計ファイル書き込み処理
+		if(!writeFile(args[0], FILE_NAME_COMMODITY_OUT, commodityNames, commoditySales)) {
+			return;
+		}
 
 	}
 
@@ -132,14 +169,18 @@ public class CalculateSales {
 	 * @param 支店コードと売上金額を保持するMap
 	 * @return 読み込み可否
 	 */
-	private static boolean readFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
+	private static boolean readFile(String path, String fileName, Map<String, String> names, Map<String, Long> sales, String regular) {
 		BufferedReader br = null;
 		Long num = 0L;
 
 		try {
 			File file = new File(path, fileName);
 			if(!file.exists()) {
-			    System.out.println(FILE_NOT_EXIST);
+				if("branch.lst" == regular) {
+					System.out.println(FILE_NOT_EXIST);
+				}else {
+					System.out.println(PRODUCT_FILE_NOT_EXIST);
+				}
 			    return false;
 			}
 			FileReader fr = new FileReader(file);
@@ -150,12 +191,16 @@ public class CalculateSales {
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
 				String[] items = line.split(",");
-				if((items.length != 2) || (!items[0].matches("^[0-9]{3}$"))){
-				    System.out.println(FILE_INVALID_FORMAT);
+				if((items.length != 2) || (!items[0].matches(regular))){
+					if("branch.lst" == regular) {
+						System.out.println(FILE_INVALID_FORMAT);
+					}else {
+						System.out.println(PRODUCT_FILE_INVALID_FORMAT);
+					}
 				    return false;
 				}
-				branchNames.put(items[0], items[1]);
-				branchSales.put(items[0], num);
+				names.put(items[0], items[1]);
+				sales.put(items[0], num);
 			}
 		} catch(IOException e) {
 			System.out.println(UNKNOWN_ERROR);
@@ -184,11 +229,11 @@ public class CalculateSales {
 	 * @param 支店コードと売上金額を保持するMap
 	 * @return 書き込み可否
 	 */
-	private static boolean writeFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
+	private static boolean writeFile(String path, String fileName, Map<String, String> names, Map<String, Long> sales) {
 		// ※ここに書き込み処理を作成してください。(処理内容3-1)
-		for (String key : branchNames.keySet()) {
+		for (String key : names.keySet()) {
 			try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName, true))){
-				bw.write(key + "," + branchNames.get(key) + "," + branchSales.get(key));
+				bw.write(key + "," + names.get(key) + "," + sales.get(key));
 				bw.newLine();
 			}catch(IOException e) {
 				System.out.println(UNKNOWN_ERROR);
